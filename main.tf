@@ -143,168 +143,169 @@ resource "aws_lambda_permission" "retrieve-rights" {
 }
 
 
-# need to re-deploy resource and methods for CORS on creation - does not correctly apply / will work on this later 
-# api gateway
-resource "aws_api_gateway_rest_api" "crc-api" {
-    name          = "crc-api"
-    description   = "API by terraform"
-}
-
-# api resource
-resource "aws_api_gateway_resource" "crc-api-resource" {
-    path_part     = "method"
-    parent_id     = aws_api_gateway_rest_api.crc-api.root_resource_id
-    rest_api_id   = aws_api_gateway_rest_api.crc-api.id
-}
-# GET method
-resource "aws_api_gateway_method" "GET_method" {
-    rest_api_id   = aws_api_gateway_rest_api.crc-api.id
-    resource_id   = aws_api_gateway_resource.crc-api-resource.id
-    http_method   = "GET"
-    authorization = "NONE"
-}
-
-# GET method response
-resource "aws_api_gateway_method_response" "GET_method_response_200" {
-    rest_api_id   = aws_api_gateway_rest_api.crc-api.id
-    resource_id   = aws_api_gateway_resource.crc-api-resource.id
-    http_method   = aws_api_gateway_method.GET_method.http_method
-    status_code   = "200"
-    response_parameters = {
-        "method.response.header.Access-Control-Allow-Headers" = true,
-        "method.response.header.Access-Control-Allow-Methods" = true,
-        "method.response.header.Access-Control-Allow-Origin" = true
-    }
-    depends_on = [aws_api_gateway_method.GET_method]
-}
-
-# GET integration
-resource "aws_api_gateway_integration" "GET_integration" {
-    rest_api_id   = aws_api_gateway_rest_api.crc-api.id
-    resource_id   = aws_api_gateway_resource.crc-api-resource.id
-    http_method   = aws_api_gateway_method.GET_method.http_method
-    integration_http_method = "GET"
-    type          = "AWS"
-    uri           = aws_lambda_function.CRC-Lambda-Retrieve.invoke_arn
-    depends_on    = [aws_api_gateway_method.GET_method, aws_lambda_function.CRC-Lambda-Retrieve]
-}
-
-# GET integration response
-resource "aws_api_gateway_integration_response" "GET_integration_response" {
-  rest_api_id = aws_api_gateway_rest_api.crc-api.id
-  resource_id = aws_api_gateway_resource.crc-api-resource.id
-  http_method = aws_api_gateway_method.GET_method.http_method
-  status_code = aws_api_gateway_method_response.GET_method_response_200.status_code
-  
-    response_parameters  = {
-        "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'",
-        "method.response.header.Access-Control-Allow-Methods" = "'GET,OPTIONS,PUT'", 
-        "method.response.header.Access-Control-Allow-Origin" = "'*'"
-      } 
-     depends_on = [aws_api_gateway_method_response.GET_method_response_200]
-}
-
-# OPTIONS method
-resource "aws_api_gateway_method" "OPTIONS_method" {
-    rest_api_id   = aws_api_gateway_rest_api.crc-api.id
-    resource_id   = aws_api_gateway_resource.crc-api-resource.id
-    http_method   = "OPTIONS"
-    authorization = "NONE"
-}
-
-# OPTIONS method response
-resource "aws_api_gateway_method_response" "OPTIONS_200" {
-    rest_api_id   = aws_api_gateway_rest_api.crc-api.id
-    resource_id   = aws_api_gateway_resource.crc-api-resource.id
-    http_method   = aws_api_gateway_method.OPTIONS_method.http_method
-    status_code   = "200"
-    response_models = {
-        "application/json" = "Empty"
-    }
-    response_parameters = {
-        "method.response.header.Access-Control-Allow-Headers" = true,
-        "method.response.header.Access-Control-Allow-Methods" = true,
-        "method.response.header.Access-Control-Allow-Origin" = true
-    }
-    depends_on = [aws_api_gateway_method.OPTIONS_method]
-}
-
-
-# OPTIONS integration
-resource "aws_api_gateway_integration" "OPTIONS_integration" {
-    rest_api_id   = aws_api_gateway_rest_api.crc-api.id
-    resource_id   = aws_api_gateway_resource.crc-api-resource.id
-    http_method   = aws_api_gateway_method.OPTIONS_method.http_method
-    type          = "MOCK"
-    depends_on = [aws_api_gateway_method.OPTIONS_method]
-}
-
-# OPTIONS integration response
-resource "aws_api_gateway_integration_response" "OPTIONS_integration_response" {
-    rest_api_id   = aws_api_gateway_rest_api.crc-api.id
-    resource_id   = aws_api_gateway_resource.crc-api-resource.id
-    http_method   = aws_api_gateway_method.OPTIONS_method.http_method
-    status_code   = aws_api_gateway_method_response.OPTIONS_200.status_code
-    response_parameters = {
-        "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'",
-        "method.response.header.Access-Control-Allow-Methods" = "'GET,OPTIONS,PUT,PUT'",
-        "method.response.header.Access-Control-Allow-Origin" = "'*'"
-    }
-    depends_on = [aws_api_gateway_method_response.OPTIONS_200]
-}
-
-# PUT method
-resource "aws_api_gateway_method" "PUT_method" {
-    rest_api_id   = aws_api_gateway_rest_api.crc-api.id
-    resource_id   = aws_api_gateway_resource.crc-api-resource.id
-    http_method   = "PUT"
-    authorization = "NONE"
-}
-
-# PUT method response
-resource "aws_api_gateway_method_response" "PUT_method_response_200" {
-    rest_api_id   = aws_api_gateway_rest_api.crc-api.id
-    resource_id   = aws_api_gateway_resource.crc-api-resource.id
-    http_method   = aws_api_gateway_method.PUT_method.http_method
-    status_code   = "200"
-    response_parameters = {
-        "method.response.header.Access-Control-Allow-Headers" = true,
-        "method.response.header.Access-Control-Allow-Methods" = true,
-        "method.response.header.Access-Control-Allow-Origin" = true
-    }
-    depends_on = [aws_api_gateway_method.PUT_method]
-}
-
-# PUT integration
-resource "aws_api_gateway_integration" "PUT_integration" {
-    rest_api_id   = aws_api_gateway_rest_api.crc-api.id
-    resource_id   = aws_api_gateway_resource.crc-api-resource.id
-    http_method   = aws_api_gateway_method.PUT_method.http_method
-    integration_http_method = "PUT"
-    type          = "AWS"
-    uri           = aws_lambda_function.CRC-Lambda-Update.invoke_arn
-    depends_on    = [aws_api_gateway_method.PUT_method, aws_lambda_function.CRC-Lambda-Update]
-}
-
-# PUT integration response
-resource "aws_api_gateway_integration_response" "PUT_integration_response" {
-  rest_api_id = aws_api_gateway_rest_api.crc-api.id
-  resource_id = aws_api_gateway_resource.crc-api-resource.id
-  http_method = aws_api_gateway_method.PUT_method.http_method
-  status_code = aws_api_gateway_method_response.PUT_method_response_200.status_code
-  
-    response_parameters  = {
-        "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'",
-        "method.response.header.Access-Control-Allow-Methods" = "'GET,OPTIONS,PUT'", 
-        "method.response.header.Access-Control-Allow-Origin" = "'*'"
-      } 
-     depends_on = [aws_api_gateway_method_response.PUT_method_response_200]
-}
-
-# deploy api
-resource "aws_api_gateway_deployment" "deployment" {
-    rest_api_id   = aws_api_gateway_rest_api.crc-api.id
-    stage_name    = "Dev"
-    depends_on    = [aws_api_gateway_integration.PUT_integration]
-}
-
+# need to re-deploy resource and methods for CORS on creation - does not correctly apply / will work on this later. Commeting out so CI/CD doesn't break it for now
+## api gateway
+#resource "aws_api_gateway_rest_api" "crc-api" {
+#    name          = "crc-api"
+#    description   = "API by terraform"
+#}
+#
+## api resource
+#resource "aws_api_gateway_resource" "crc-api-resource" {
+#    path_part     = "method"
+#    parent_id     = aws_api_gateway_rest_api.crc-api.root_resource_id
+#    rest_api_id   = aws_api_gateway_rest_api.crc-api.id
+#}
+## GET method
+#resource "aws_api_gateway_method" "GET_method" {
+#    rest_api_id   = aws_api_gateway_rest_api.crc-api.id
+#    resource_id   = aws_api_gateway_resource.crc-api-resource.id
+#    http_method   = "GET"
+#    authorization = "NONE"
+#}
+#
+## GET method response
+#resource "aws_api_gateway_method_response" "GET_method_response_200" {
+#    rest_api_id   = aws_api_gateway_rest_api.crc-api.id
+#    resource_id   = aws_api_gateway_resource.crc-api-resource.id
+#    http_method   = aws_api_gateway_method.GET_method.http_method
+#    status_code   = "200"
+#    response_parameters = {
+#        "method.response.header.Access-Control-Allow-Headers" = true,
+#        "method.response.header.Access-Control-Allow-Methods" = true,
+#        "method.response.header.Access-Control-Allow-Origin" = true
+#    }
+#    depends_on = [aws_api_gateway_method.GET_method]
+#}
+#
+## GET integration
+#resource "aws_api_gateway_integration" "GET_integration" {
+#    rest_api_id   = aws_api_gateway_rest_api.crc-api.id
+#    resource_id   = aws_api_gateway_resource.crc-api-resource.id
+#    http_method   = aws_api_gateway_method.GET_method.http_method
+#    integration_http_method = "GET"
+#    type          = "AWS"
+#    uri           = aws_lambda_function.CRC-Lambda-Retrieve.invoke_arn
+#    depends_on    = [aws_api_gateway_method.GET_method, aws_lambda_function.CRC-Lambda-Retrieve]
+#}
+#
+## GET integration response
+#resource "aws_api_gateway_integration_response" "GET_integration_response" {
+#  rest_api_id = aws_api_gateway_rest_api.crc-api.id
+#  resource_id = aws_api_gateway_resource.crc-api-resource.id
+#  http_method = aws_api_gateway_method.GET_method.http_method
+#  status_code = aws_api_gateway_method_response.GET_method_response_200.status_code
+#  
+#    response_parameters  = {
+#        "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'",
+#        "method.response.header.Access-Control-Allow-Methods" = "'GET,OPTIONS,PUT'", 
+#        "method.response.header.Access-Control-Allow-Origin" = "'*'"
+#      } 
+#     depends_on = [aws_api_gateway_method_response.GET_method_response_200]
+#}
+#
+## OPTIONS method
+#resource "aws_api_gateway_method" "OPTIONS_method" {
+#    rest_api_id   = aws_api_gateway_rest_api.crc-api.id
+#    resource_id   = aws_api_gateway_resource.crc-api-resource.id
+#    http_method   = "OPTIONS"
+#    authorization = "NONE"
+#}
+#
+## OPTIONS method response
+#resource "aws_api_gateway_method_response" "OPTIONS_200" {
+#    rest_api_id   = aws_api_gateway_rest_api.crc-api.id
+#    resource_id   = aws_api_gateway_resource.crc-api-resource.id
+#    http_method   = aws_api_gateway_method.OPTIONS_method.http_method
+#    status_code   = "200"
+#    response_models = {
+#        "application/json" = "Empty"
+#    }
+#    response_parameters = {
+#        "method.response.header.Access-Control-Allow-Headers" = true,
+#        "method.response.header.Access-Control-Allow-Methods" = true,
+#        "method.response.header.Access-Control-Allow-Origin" = true
+#    }
+#    depends_on = [aws_api_gateway_method.OPTIONS_method]
+#}
+#
+#
+## OPTIONS integration
+#resource "aws_api_gateway_integration" "OPTIONS_integration" {
+#    rest_api_id   = aws_api_gateway_rest_api.crc-api.id
+#    resource_id   = aws_api_gateway_resource.crc-api-resource.id
+#    http_method   = aws_api_gateway_method.OPTIONS_method.http_method
+#    type          = "MOCK"
+#    depends_on = [aws_api_gateway_method.OPTIONS_method]
+#}
+#
+## OPTIONS integration response
+#resource "aws_api_gateway_integration_response" "OPTIONS_integration_response" {
+#    rest_api_id   = aws_api_gateway_rest_api.crc-api.id
+#    resource_id   = aws_api_gateway_resource.crc-api-resource.id
+#    http_method   = aws_api_gateway_method.OPTIONS_method.http_method
+#    status_code   = aws_api_gateway_method_response.OPTIONS_200.status_code
+#    response_parameters = {
+#        "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'",
+#        "method.response.header.Access-Control-Allow-Methods" = "'GET,OPTIONS,PUT,PUT'",
+#        "method.response.header.Access-Control-Allow-Origin" = "'*'"
+#    }
+#    depends_on = [aws_api_gateway_method_response.OPTIONS_200]
+#}
+#
+## PUT method
+#resource "aws_api_gateway_method" "PUT_method" {
+#    rest_api_id   = aws_api_gateway_rest_api.crc-api.id
+#    resource_id   = aws_api_gateway_resource.crc-api-resource.id
+#    http_method   = "PUT"
+#    authorization = "NONE"
+#}
+#
+## PUT method response
+#resource "aws_api_gateway_method_response" "PUT_method_response_200" {
+#    rest_api_id   = aws_api_gateway_rest_api.crc-api.id
+#    resource_id   = aws_api_gateway_resource.crc-api-resource.id
+#    http_method   = aws_api_gateway_method.PUT_method.http_method
+#    status_code   = "200"
+#    response_parameters = {
+#        "method.response.header.Access-Control-Allow-Headers" = true,
+#        "method.response.header.Access-Control-Allow-Methods" = true,
+#        "method.response.header.Access-Control-Allow-Origin" = true
+#    }
+#    depends_on = [aws_api_gateway_method.PUT_method]
+#}
+#
+## PUT integration
+#resource "aws_api_gateway_integration" "PUT_integration" {
+#    rest_api_id   = aws_api_gateway_rest_api.crc-api.id
+#    resource_id   = aws_api_gateway_resource.crc-api-resource.id
+#    http_method   = aws_api_gateway_method.PUT_method.http_method
+#    integration_http_method = "PUT"
+#    type          = "AWS"
+#    uri           = aws_lambda_function.CRC-Lambda-Update.invoke_arn
+#    depends_on    = [aws_api_gateway_method.PUT_method, aws_lambda_function.CRC-Lambda-Update]
+#}
+#
+## PUT integration response
+#resource "aws_api_gateway_integration_response" "PUT_integration_response" {
+#  rest_api_id = aws_api_gateway_rest_api.crc-api.id
+#  resource_id = aws_api_gateway_resource.crc-api-resource.id
+#  http_method = aws_api_gateway_method.PUT_method.http_method
+#  status_code = aws_api_gateway_method_response.PUT_method_response_200.status_code
+#  
+#    response_parameters  = {
+#        "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'",
+#        "method.response.header.Access-Control-Allow-Methods" = "'GET,OPTIONS,PUT'", 
+#        "method.response.header.Access-Control-Allow-Origin" = "'*'"
+#      } 
+#     depends_on = [aws_api_gateway_method_response.PUT_method_response_200]
+#}
+#
+## deploy api
+#resource "aws_api_gateway_deployment" "deployment" {
+#    rest_api_id   = aws_api_gateway_rest_api.crc-api.id
+#    stage_name    = "Dev"
+#    depends_on    = [aws_api_gateway_integration.PUT_integration]
+#}
+#
+#
