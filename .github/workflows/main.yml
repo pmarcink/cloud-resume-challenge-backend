@@ -1,6 +1,5 @@
-name: 'Terraform'
+name: 'terraform'
 on:
-  pull_request:
   push:
     branches:
       - main 
@@ -10,7 +9,25 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 2
     steps:
-        - uses: action/checkout@v2
-        - uses: hashicorp/setup-terraform@v1
-        
-          
+    - name: checkout
+        uses: action/checkout@v2
+    - name: terraform-setup
+       uses: hashicorp/setup-terraform@v1
+        with: cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+    - name: terraform Format
+        id: fmt
+        run: terraform fmt -check
+    
+    - name: terraform-init
+        id: init
+        run: terraform init
+      
+    - name: terraform-validate
+        id: validate
+        run: terraform validate -no-color
+
+    - name: terraform-plan
+        id: plan
+        if: github.event_name == 'pull_request'
+        run: terraform plan -no-color
+        continue-on-error: true
