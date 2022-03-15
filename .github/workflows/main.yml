@@ -10,10 +10,12 @@ jobs:
     timeout-minutes: 2
     steps:
     - name: checkout
-        uses: action/checkout@v2
+      uses: actions/checkout@v2
+
     - name: terraform-setup
-       uses: hashicorp/setup-terraform@v1
-        with: cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+      uses: hashicorp/setup-terraform@v1
+      with: cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+      
     - name: terraform Format
         id: fmt
         run: terraform fmt -check
